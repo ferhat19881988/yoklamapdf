@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fenomen Çocuk Kulübü - Hızlı Yoklama</title>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #cbd5e1;
+            --danger: #dc2626;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background-color: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 80vh;
+        }
+
+        /* --- Header --- */
+        header {
+            background: #fff;
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #1e293b;
+            font-weight: 700;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        /* --- Control Panel --- */
+        .control-panel {
+            padding: 20px 30px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .panel-group {
+            flex: 1;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .panel-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+
+        /* Inputs & Buttons */
+        .styled-input {
+            padding: 8px 12px;
+            border: 1px solid #94a3b8;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .btn {
+            padding: 10px 18px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: all 0.1s;
+        }
+        .btn:hover { transform: translateY(-1px); opacity: 0.95; }
+        .btn:active { transform: translateY(0); }
+        
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-print { background: #0f172a; color: white; }
+
+        /* --- Date Chips --- */
+        .date-row { display: flex; gap: 5px; }
+        .date-chips { display: flex; flex-wrap: wrap; gap: 5px; min-height: 25px; }
+        .chip {
+            background: #e0e7ff; color: var(--primary); padding: 4px 10px; border-radius: 20px;
+            font-size: 0.85rem; display: flex; align-items: center; gap: 5px; border: 1px solid #c7d2fe;
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .chip i { cursor: pointer; color: #4338ca; }
+        .chip i:hover { color: #dc2626; }
+
+        /* --- Filter Bar --- */
+        .filter-bar {
+            background: #f1f5f9;
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-item { flex: 1; min-width: 150px; }
+        .filter-item.search { flex: 2; min-width: 250px; }
+        .filter-item label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 4px; }
+
+        /* --- Add Modal --- */
+        .add-modal {
+            display: none; background: #fff; padding: 20px 30px; border-bottom: 1px solid var(--border);
+            background-color: #f0fdf4;
+        }
+        .add-modal.active { display: block; }
+        .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+
+        /* --- Table --- */
+        .table-container { 
+            flex: 1; 
+            overflow: auto; 
+            background: white;
+            position: relative;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        
+        thead { 
+            background: #f8fafc; 
+            position: sticky; 
+            top: 0; 
+            z-index: 10; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+        }
+        th {
+            text-align: left; 
+            padding: 14px 20px; 
+            font-size: 0.85rem; 
+            font-weight: 700; 
+            color: #475569;
+            border-bottom: 2px solid var(--border); 
+            cursor: pointer; 
+            user-select: none;
+            white-space: nowrap;
+        }
+        th:hover { color: var(--primary); background: #e2e8f0; }
+
+        /* sıralama başlıkları ve ikonları */
+        th.sortable .sort-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sort-icon {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+        th.sorted {
+            background: #e0f2fe;
+            color: var(--primary);
+        }
+        
+        td { 
+            padding: 10px 20px; 
+            border-bottom: 1px solid #e2e8f0; 
+            font-size: 0.95rem; 
+            color: #334155; 
+        }
+        tr:hover td { background-color: #f8fafc; color: var(--primary); }
+        
+        /* Action Buttons */
+        .action-btn {
+            width: 30px; height: 30px; border-radius: 4px; border: none; background: transparent;
+            color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+        }
+        .action-btn:hover { background-color: #fee2e2; color: var(--danger); }
+
+        /* --- Footer --- */
+        .footer-bar {
+            padding: 10px 30px; background: #fff; border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; 
+            font-size: 0.85rem; color: #64748b; font-weight: 500;
+        }
+
+        /* --- Toast Notification --- */
+        #toast {
+            visibility: hidden; min-width: 200px; background-color: #0f172a; color: #fff;
+            text-align: center; border-radius: 8px; padding: 12px; position: fixed;
+            left: 50%; bottom: 30px; transform: translateX(-50%); z-index: 2000; opacity: 0; transition: all 0.2s;
+            font-weight: 600; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        /* --- PRINT CSS --- */
+        @media print {
+            @page { margin: 5mm; size: A4; }
+            body { background: white !important; padding: 0 !important; font-family: 'Times New Roman', serif !important; }
+            .container { box-shadow: none; border: none; width: 100%; max-width: 100%; margin: 0; min-height: auto; display: block; }
+            .no-print, header, .control-panel, .filter-bar, .add-modal, .footer-bar, .action-col { display: none !important; }
+            
+            /* tablo daha ince ve %95 genişlikte */
+            table { 
+                width: 95%; 
+                border-collapse: collapse !important; 
+                table-layout: fixed;           /* Sütun genişliklerinin net uygulanması için */
+                margin-top: 10px; 
+                margin-left: auto;
+                margin-right: auto;
+                font-size: 11pt; 
+                page-break-inside: auto; 
+            }
+            thead { display: table-header-group; }
+
+            tr { page-break-inside: avoid; }
+
+            /* KESİKLİ ve BELİRGİN ÇİZGİLER */
+            th, td { 
+                border: 0.7pt dashed #000 !important; 
+                color: #000 !important; 
+                padding: 4px 6px !important;
+                vertical-align: middle;
+            }
+
+            /* YOKLAMA SÜTUNU: KALIN DÜZ ÇİZGİ */
+            th.col-yoklama,
+            td.col-yoklama {
+                border-style: solid !important;
+                border-width: 1.2pt !important;
+            }
+
+            th { 
+                background-color: #f0f0f0 !important; 
+                font-weight: bold; 
+                text-align: center;
+                font-size: 13pt;
+            }
+
+            /* Sütun Ayarları – Ad/Soyad biraz daraltıldı, Yoklama diğer dar sütunlara göre daha geniş */
+            .col-no { width: 40px; text-align: center; }
+            .col-sinif { width: 40px; text-align: center; }
+            .col-sube { width: 35px; text-align: center; }
+            .col-yoklama { width: 80px; text-align: center; }
+
+            /* Ad ve Soyad sütunları (1. ve 2. sütun) biraz daraltıldı */
+            thead th:nth-child(1),
+            tbody td:nth-child(1) { width: 140px; }
+            thead th:nth-child(2),
+            tbody td:nth-child(2) { width: 140px; }
+            
+            .yoklama-box { 
+                display: block !important; 
+                height: 18px; 
+                width: 100%; 
+            }
+
+            /* Yazdırma Başlığı daha büyük */
+            .print-header { 
+                display: block !important; 
+                text-align: center; 
+                margin-bottom: 15px; 
+            }
+            .print-header h2 { 
+                margin: 0; 
+                font-size: 18pt; 
+                font-weight: 800; 
+                text-transform: uppercase; 
+                border-bottom: 2px solid #000; 
+                display: inline-block; 
+                padding-bottom: 4px;
+            }
+            .print-header p { 
+                margin: 5px 0 0; 
+                font-size: 11pt; 
+                font-weight: bold; 
+            }
+
+            /* Uyarı Kutusu – tablo ile aynı genişlikte */
+            .print-warning-box { 
+                display: block !important; 
+                margin-top: 10px; 
+                width: 95%;
+                margin-left: auto;
+                margin-right: auto;
+                border: 0.7pt dashed #000;
+                padding: 6px 8px; 
+                text-align: center; 
+                font-size: 10pt; 
+                box-sizing: border-box;
+                page-break-inside: avoid;
+            }
+
+            /* yazdırırken sıralama oklarını gizle, başlık rengini standartla */
+            .sort-icon { display: none !important; }
+            th.sorted { 
+                background-color: #f0f0f0 !important; 
+                color: #000 !important; 
+            }
+        }
+        
+        .print-header, .yoklama-box, .print-warning-box { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="toast">İşlem Başarılı</div>
+
+    <div class="container">
+        <header class="no-print">
+            <h1><i class="fas fa-child-reaching" style="color:var(--primary);"></i> Fenomen Çocuk Kulübü</h1>
+            <button class="btn btn-print" onclick="window.print()">
+                <i class="fas fa-print"></i> LİSTEYİ YAZDIR
+            </button>
+        </header>
+
+        <div class="print-header">
+            <h2>YOKLAMA LİSTESİ</h2>
+            <p id="printDateText"></p>
+        </div>
+
+        <div class="control-panel no-print">
+            
+            <div class="panel-group">
+                <div class="panel-title">1. Veri Kaynağı & Tarih</div>
+                <input type="file" id="fileInput" class="styled-input" accept=".xlsx, .xls, .csv" />
+                
+                <div class="date-row">
+                    <input type="date" id="datePicker" class="styled-input">
+                    <button class="btn btn-primary" onclick="addDate()">Ekle</button>
+                    <button class="btn btn-danger" onclick="clearDates()" title="Tarihleri Sil"><i class="fas fa-trash"></i></button>
+                </div>
+                <div class="date-chips" id="dateChipsContainer"></div>
+            </div>
+
+            <div class="panel-group">
+                <div class="panel-title">2. Liste Yönetimi</div>
+                
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <label style="font-size:0.8rem; font-weight:bold; white-space:nowrap;">Yeni Kayıt No Başlangıç:</label>
+                    <input type="number" id="warningStartNo" class="styled-input" placeholder="Örn: 100" style="width: 100px;" oninput="updateFooterWarning()">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: auto;">
+                    <button class="btn btn-primary" style="background:#10b981;" onclick="toggleAddModal()"><i class="fas fa-plus"></i> Öğrenci Ekle</button>
+                    <button class="btn btn-danger" onclick="resetAll()"><i class="fas fa-eraser"></i> Her Şeyi Sil</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="add-modal no-print" id="addModal">
+            <div class="panel-title" style="color: #15803d; margin-bottom:10px;">Manuel Öğrenci Kaydı</div>
+            <div class="form-row">
+                <input type="text" id="newAd" class="styled-input" placeholder="Ad" style="flex:2;">
+                <input type="text" id="newSoyad" class="styled-input" placeholder="Soyad" style="flex:2;">
+                <input type="text" id="newSinif" class="styled-input" placeholder="Sınıf" style="width:70px;">
+                <input type="text" id="newSube" class="styled-input" placeholder="Şube" style="width:70px;">
+                <input type="number" id="newNo" class="styled-input" placeholder="No" style="width:100px;">
+                
+                <button class="btn btn-primary" onclick="addStudentManual()">KAYDET</button>
+                <button class="btn btn-danger" onclick="cancelAddStudent()" style="background:#cbd5e1; color:#334155;">İPTAL</button>
+            </div>
+        </div>
+
+        <div class="filter-bar no-print">
+            <div class="filter-item search">
+                <label>Arama</label>
+                <input type="text" id="searchInput" class="styled-input" placeholder="İsim veya numara ile ara..." onkeyup="handleFilterChange()">
+            </div>
+            <div class="filter-item">
+                <label>Sınıf Filtrele</label>
+                <select id="filterSinif" class="styled-input" onchange="handleFilterChange()">
+                    <option value="">Tümü</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>Şube Filtrele</label>
+                <select id="filterSube" class="styled-input" onchange="handleFilterChange()">
+                    <option value="">Tümü</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- TOPLAM / ÇİFT TIKLA BİLGİSİ ÜSTE ALINDI -->
+        <div class="footer-bar no-print">
+            <span id="totalCountDisplay">Toplam: 0</span>
+            <span><i class="fas fa-mouse"></i> Çift tıkla kopyala</span>
+        </div>
+
+        <div class="table-container">
+            <table id="mainTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="sortTable('ad', this)">
+                            <span class="sort-label">Ad <span class="sort-icon"></span></span>
+                        </th>
+                        <th class="sortable" onclick="sortTable('soyad', this)">
+                            <span class="sort-label">Soyad <span class="sort-icon"></span></span>
+                        </th>
+                        <th class="col-no sortable" onclick="sortTable('no', this)">
+                            <span class="sort-label">No <span class="sort-icon"></span></span>
+                        </th>
+                        <th class="col-sinif sortable" onclick="sortTable('sinif', this)">
+                            <span class="sort-label">Sınıf <span class="sort-icon"></span></span>
+                        </th>
+                        <th class="col-sube sortable" onclick="sortTable('sube', this)">
+                            <span class="sort-label">Şube <span class="sort-icon"></span></span>
+                        </th>
+                        <th class="col-yoklama" style="cursor:default;">Yoklama</th>
+                        <th class="action-col no-print" style="width:50px; text-align:center; cursor:default;">Sil</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="7" style="text-align: center; padding: 40px; color: #94a3b8;">Veri yok.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="print-warning-box">
+            <i class="fas fa-exclamation-triangle"></i> DİKKAT: 
+            Yeni gelecek öğrencilere <b><span id="printWarningNo">---</span></b> numarası ve üzerindeki sayılardan veriniz.
+        </div>
+    </div>
+
+    <script>
+        // --- GLOBAL DEĞİŞKENLER ---
+        let allStudents = [];       // Tüm veriyi tutar
+        let displayedStudents = []; // Ekranda görünen veriyi tutar
+        let selectedDates = [];     // Seçilen tarihler
+        let sortState = { key: null, dir: 'asc' }; // aktif sıralama durumu
+        
+        // --- EVENT DELEGATION ---
+        const tableBody = document.getElementById('tableBody');
+        
+        tableBody.addEventListener('click', function(e) {
+            // Silme Butonu Kontrolü
+            const btn = e.target.closest('.action-btn');
+            if (btn) {
+                const id = btn.getAttribute('data-id');
+                deleteStudent(id);
+            }
+        });
+
+        tableBody.addEventListener('dblclick', function(e) {
+            // Kopyalama Kontrolü
+            const cell = e.target.closest('td');
+            if (cell && !cell.classList.contains('action-col') && !cell.classList.contains('col-yoklama')) {
+                const text = cell.innerText;
+                navigator.clipboard.writeText(text).then(() => {
+                    const safe = escapeHtml(text);
+                    showToast(`Kopyalandı : "<span style='color:#16a34a;'>${safe}</span>"`);
+                });
+            }
+        });
+
+        document.getElementById('fileInput').addEventListener('change', handleFile);
+
+        // --- TARİH İŞLEMLERİ ---
+        function addDate() {
+            const picker = document.getElementById('datePicker');
+            if (!picker.value) return;
+
+            const d = new Date(picker.value);
+            const formatted = d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+            
+            if (!selectedDates.includes(formatted)) {
+                selectedDates.push(formatted);
+                renderDateChips();
+            }
+            picker.value = '';
+        }
+
+        function renderDateChips() {
+            const container = document.getElementById('dateChipsContainer');
+            const printText = document.getElementById('printDateText');
+            
+            container.innerHTML = selectedDates.map((date, idx) => `
+                <div class="chip">
+                    ${date} <i class="fas fa-times" onclick="removeDate(${idx})"></i>
+                </div>
+            `).join('');
+            
+            printText.innerText = selectedDates.join(' - ');
+        }
+
+        function removeDate(index) {
+            selectedDates.splice(index, 1);
+            renderDateChips();
+        }
+
+        function clearDates() {
+            selectedDates = [];
+            renderDateChips();
+        }
+
+        function updateFooterWarning() {
+            const val = document.getElementById('warningStartNo').value;
+            document.getElementById('printWarningNo').innerText = val || '---';
+        }
+
+        // --- DOSYA İŞLEME ---
+        function handleFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                
+                // Veriyi Formatla
+                allStudents = jsonData.map(row => {
+                    let no = row['Okul Numarası'] || row['No'] || row['Numara'] || 0;
+                    let ad = row['Ad'] || row['AD'] || '';
+                    let soyad = row['Soyad'] || row['SOYAD'] || '';
+                    let sinif = row['SınıfAd'] || row['Sınıf'] || row['SINIF'] || '';
+                    let sube = row['ŞubeAd'] || row['Şube'] || row['ŞUBE'] || '';
+
+                    if (ad && soyad) {
+                        return {
+                            id: Math.random().toString(36).substr(2, 9),
+                            ad: String(ad).trim().toUpperCase(),
+                            soyad: String(soyad).trim().toUpperCase(),
+                            no: Number(no),
+                            sinif: sinif,
+                            sube: String(sube).trim().toUpperCase()
+                        };
+                    }
+                    return null;
+                }).filter(s => s !== null);
+
+                // Varsayılan Sıralama
+                allStudents.sort((a,b) => a.sinif - b.sinif || a.sube.localeCompare(b.sube) || a.no - b.no);
+
+                populateFilterDropdowns();
+                handleFilterChange();
+                document.getElementById('fileInput').value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // --- LİSTE YÖNETİMİ ---
+        function toggleAddModal() {
+            document.getElementById('addModal').classList.toggle('active');
+        }
+
+        function clearAddForm() {
+            const ids = ['newAd','newSoyad','newSinif','newSube','newNo'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+        }
+
+        function cancelAddStudent() {
+            clearAddForm();
+            toggleAddModal();
+        }
+
+        function addStudentManual() {
+            const ad = document.getElementById('newAd').value.trim().toUpperCase();
+            const soyad = document.getElementById('newSoyad').value.trim().toUpperCase();
+            const sinif = document.getElementById('newSinif').value;
+            const sube = document.getElementById('newSube').value.trim().toUpperCase();
+            const noVal = document.getElementById('newNo').value;
+
+            if (!ad || !soyad || !noVal) return showToast("Eksik bilgi!");
+            
+            const no = parseInt(noVal);
+            if (allStudents.some(s => s.no === no)) return alert("Bu numara zaten var!");
+
+            allStudents.push({
+                id: Math.random().toString(36).substr(2, 9),
+                ad, soyad, sinif, sube, no
+            });
+
+            populateFilterDropdowns();
+            handleFilterChange();
+            
+            clearAddForm();
+            showToast("Öğrenci Eklendi");
+        }
+
+        function deleteStudent(id) {
+            if (confirm("Silmek istiyor musunuz?")) {
+                const index = allStudents.findIndex(s => s.id === id);
+                if (index > -1) {
+                    allStudents.splice(index, 1);
+                    // filtre ve sıralamayı bozmadan tabloyu yenile
+                    handleFilterChange(); 
+                    showToast("Silindi");
+                }
+            }
+        }
+
+        function resetAll() {
+            if (confirm("TÜM LİSTE SİLİNECEK! Emin misiniz?")) {
+                allStudents = [];
+                displayedStudents = [];
+                sortState = { key: null, dir: 'asc' };
+                handleFilterChange();
+                populateFilterDropdowns();
+                clearDates();
+            }
+        }
+
+        // --- FİLTRELEME & GÖSTERİM ---
+        function populateFilterDropdowns() {
+            const sinifSel = document.getElementById('filterSinif');
+            const subeSel = document.getElementById('filterSube');
+            
+            const currentSinif = sinifSel.value;
+            const currentSube = subeSel.value;
+
+            const siniflar = [...new Set(allStudents.map(s => s.sinif))].sort();
+            const subeler = [...new Set(allStudents.map(s => s.sube))].sort();
+
+            sinifSel.innerHTML = '<option value="">Tümü</option>' + siniflar.map(s => `<option value="${s}">${s}</option>`).join('');
+            subeSel.innerHTML = '<option value="">Tümü</option>' + subeler.map(s => `<option value="${s}">${s}</option>`).join('');
+
+            if (siniflar.includes(currentSinif) || currentSinif == String(currentSinif)) sinifSel.value = currentSinif;
+            if (subeler.includes(currentSube)) subeSel.value = currentSube;
+        }
+
+        function handleFilterChange() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const fSinif = document.getElementById('filterSinif').value;
+            const fSube = document.getElementById('filterSube').value;
+
+            displayedStudents = allStudents.filter(s => {
+                const matchText = (s.ad + ' ' + s.soyad + ' ' + s.no).toLowerCase().includes(search);
+                const matchSinif = fSinif === "" || s.sinif == fSinif;
+                const matchSube = fSube === "" || s.sube === fSube;
+                return matchText && matchSinif && matchSube;
+            });
+
+            applySort();
+            renderTable();
+        }
+
+        function renderTable() {
+            if (displayedStudents.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #94a3b8;">Veri yok.</td></tr>';
+                document.getElementById('totalCountDisplay').innerText = "Toplam: 0";
+                return;
+            }
+
+            const html = displayedStudents.map(s => `
+                <tr>
+                    <td>${s.ad}</td>
+                    <td>${s.soyad}</td>
+                    <td class="col-no" style="font-weight:700;">${s.no}</td>
+                    <td class="col-sinif">${s.sinif}</td>
+                    <td class="col-sube">${s.sube}</td>
+                    <td class="col-yoklama"><div class="yoklama-box"></div></td>
+                    <td class="action-col no-print" style="text-align:center;">
+                        <button class="action-btn" data-id="${s.id}" title="Sil">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            tableBody.innerHTML = html;
+            document.getElementById('totalCountDisplay').innerText = `Toplam: ${displayedStudents.length}`;
+        }
+
+        // --- SIRALAMA ---
+        function applySort() {
+            if (!sortState.key) return;
+
+            const key = sortState.key;
+            const dir = sortState.dir;
+
+            displayedStudents.sort((a, b) => {
+                let valA = a[key];
+                let valB = b[key];
+
+                if (typeof valA === 'number' && typeof valB === 'number') {
+                    return dir === 'asc' ? valA - valB : valB - valA;
+                }
+
+                valA = String(valA ?? '');
+                valB = String(valB ?? '');
+                return dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            });
+        }
+
+        function sortTable(key, thElement) {
+            const newDir = (sortState.key === key && sortState.dir === 'asc') ? 'desc' : 'asc';
+            sortState = { key: key, dir: newDir };
+
+            applySort();
+            updateSortHeaderVisuals(thElement, newDir);
+            renderTable();
+        }
+
+        function updateSortHeaderVisuals(activeTh, dir) {
+            const headers = document.querySelectorAll('#mainTable thead th.sortable');
+            headers.forEach(th => {
+                th.classList.remove('sorted');
+                const icon = th.querySelector('.sort-icon');
+                if (icon) icon.textContent = '';
+            });
+
+            if (activeTh) {
+                activeTh.classList.add('sorted');
+                const icon = activeTh.querySelector('.sort-icon');
+                if (icon) icon.textContent = dir === 'asc' ? '▲' : '▼';
+            }
+        }
+
+        // HTML karakterleri için güvenli hale getirme
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // --- TOAST ---
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerHTML = msg;
+            t.className = "show";
+            setTimeout(() => t.className = t.className.replace("show", ""), 2000);
+        }
+    </script>
+</body>
+</html>
