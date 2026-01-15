@@ -176,14 +176,14 @@
         }
 
         /* Ad alanını zorla görünür tut (olası eklenti/override durumlarına karşı) */
-        #newAd {
+        #newAdi {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
         }
 
         /* Ad/Soyad alanları asla sıfıra düşmesin */
-        #newAd, #newSoyad { min-width: 180px; }
+        #newAdi, #newSoyad { min-width: 180px; }
 
 
         /* --- Table --- */
@@ -420,7 +420,7 @@
         <div class="add-modal no-print" id="addModal">
             <div class="panel-title" style="color: #15803d; margin-bottom:10px;">Manuel Öğrenci Kaydı</div>
             <div class="form-row">
-                <input type="text" id="newAd" class="styled-input" placeholder="Ad">
+                <input type="text" id="newAdi" class="styled-input" placeholder="Ad">
                 <input type="text" id="newSoyad" class="styled-input" placeholder="Soyad">
                 <input type="text" id="newSinif" class="styled-input" placeholder="Sınıf">
                 <input type="text" id="newSube" class="styled-input" placeholder="Şube">
@@ -615,7 +615,7 @@
         }
 
         function clearAddForm() {
-            const ids = ['newAd','newSoyad','newSinif','newSube','newNo'];
+            const ids = ['newAdi','newSoyad','newSinif','newSube','newNo'];
             ids.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
@@ -628,7 +628,7 @@
         }
 
         function addStudentManual() {
-            const ad = document.getElementById('newAd').value.trim().toUpperCase();
+            const ad = document.getElementById('newAdi').value.trim().toUpperCase();
             const soyad = document.getElementById('newSoyad').value.trim().toUpperCase();
             const sinif = document.getElementById('newSinif').value;
             const sube = document.getElementById('newSube').value.trim().toUpperCase();
