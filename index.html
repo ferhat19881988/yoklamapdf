@@ -149,19 +149,41 @@
         /* Manuel öğrenci kaydı satırı: Ad alanının kaybolmaması için grid yerleşim */
         .add-modal .form-row {
             display: grid;
-            grid-template-columns: 2fr 2fr 90px 90px 120px auto auto;
+            /*
+              Not: Bazı cihaz/zoom senaryolarında flex satırında ilk alan (Ad)
+              görünmez hale gelebiliyordu. Grid + minmax ile her alanın görünürlüğünü
+              garantiliyoruz.
+            */
+            grid-template-columns:
+                minmax(180px, 2fr)  /* Ad */
+                minmax(180px, 2fr)  /* Soyad */
+                minmax(80px, 110px) /* Sınıf */
+                minmax(80px, 110px) /* Şube */
+                minmax(90px, 130px) /* No */
+                minmax(110px, 140px)/* Kaydet */
+                minmax(110px, 140px);/* İptal */
             gap: 10px;
             align-items: end;
+            width: 100%;
         }
+	        .add-modal .form-row > * { min-width: 0; }
         /* Küçük ekranlarda 2 satıra düşür */
         @media (max-width: 900px) {
             .add-modal .form-row {
-                grid-template-columns: 1fr 1fr 80px 80px 110px;
+                grid-template-columns: 1fr 1fr 90px 90px 110px;
             }
             .add-modal .form-row .btn { width: 100%; }
         }
+
+        /* Ad alanını zorla görünür tut (olası eklenti/override durumlarına karşı) */
+        #newAd {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
         /* Ad/Soyad alanları asla sıfıra düşmesin */
-        #newAd, #newSoyad { min-width: 160px; }
+        #newAd, #newSoyad { min-width: 180px; }
 
 
         /* --- Table --- */
@@ -398,11 +420,11 @@
         <div class="add-modal no-print" id="addModal">
             <div class="panel-title" style="color: #15803d; margin-bottom:10px;">Manuel Öğrenci Kaydı</div>
             <div class="form-row">
-                <input type="text" id="newAd" class="styled-input" placeholder="Ad" style="flex:2;">
-                <input type="text" id="newSoyad" class="styled-input" placeholder="Soyad" style="flex:2;">
-                <input type="text" id="newSinif" class="styled-input" placeholder="Sınıf" style="width:70px;">
-                <input type="text" id="newSube" class="styled-input" placeholder="Şube" style="width:70px;">
-                <input type="number" id="newNo" class="styled-input" placeholder="No" style="width:100px;">
+                <input type="text" id="newAd" class="styled-input" placeholder="Ad">
+                <input type="text" id="newSoyad" class="styled-input" placeholder="Soyad">
+                <input type="text" id="newSinif" class="styled-input" placeholder="Sınıf">
+                <input type="text" id="newSube" class="styled-input" placeholder="Şube">
+                <input type="number" id="newNo" class="styled-input" placeholder="No">
                 
                 <button class="btn btn-primary" onclick="addStudentManual()">KAYDET</button>
                 <button class="btn btn-danger" onclick="cancelAddStudent()" style="background:#cbd5e1; color:#334155;">İPTAL</button>
