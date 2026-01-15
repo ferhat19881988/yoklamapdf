@@ -146,7 +146,23 @@
             background-color: #f0fdf4;
         }
         .add-modal.active { display: block; }
-        .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+        /* Manuel öğrenci kaydı satırı: Ad alanının kaybolmaması için grid yerleşim */
+        .add-modal .form-row {
+            display: grid;
+            grid-template-columns: 2fr 2fr 90px 90px 120px auto auto;
+            gap: 10px;
+            align-items: end;
+        }
+        /* Küçük ekranlarda 2 satıra düşür */
+        @media (max-width: 900px) {
+            .add-modal .form-row {
+                grid-template-columns: 1fr 1fr 80px 80px 110px;
+            }
+            .add-modal .form-row .btn { width: 100%; }
+        }
+        /* Ad/Soyad alanları asla sıfıra düşmesin */
+        #newAd, #newSoyad { min-width: 160px; }
+
 
         /* --- Table --- */
         .table-container { 
@@ -382,8 +398,8 @@
         <div class="add-modal no-print" id="addModal">
             <div class="panel-title" style="color: #15803d; margin-bottom:10px;">Manuel Öğrenci Kaydı</div>
             <div class="form-row">
-                <input type="text" id="newAd" class="styled-input" placeholder="Ad" style="flex:1 1 200px; min-width:200px;">
-                <input type="text" id="newSoyad" class="styled-input" placeholder="Soyad" style="flex:1 1 200px; min-width:200px;">
+                <input type="text" id="newAd" class="styled-input" placeholder="Ad" style="flex:2;">
+                <input type="text" id="newSoyad" class="styled-input" placeholder="Soyad" style="flex:2;">
                 <input type="text" id="newSinif" class="styled-input" placeholder="Sınıf" style="width:70px;">
                 <input type="text" id="newSube" class="styled-input" placeholder="Şube" style="width:70px;">
                 <input type="number" id="newNo" class="styled-input" placeholder="No" style="width:100px;">
